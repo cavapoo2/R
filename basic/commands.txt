@@ -1,0 +1,119 @@
+#this is just a list of common commands for R
+
+#number of rows
+row(var) - tells the number of rows
+
+#all columns except the first
+college = college[,-1]
+
+#read csv
+acsv <- read.csv("some.csv")
+
+#show csv
+fix(acsv)
+
+#repeat
+rep(val,number)
+
+#load a source file
+source("filename")
+
+#make classification numeric
+factor(var) or as.factor(var)
+
+#add new column to data.frame
+college=data.frame(college,newcol)
+
+#number of rows or columns of data.frame
+nrow(data) or ncol(data)
+
+#histogram
+hist(var, breaks=x)
+
+#split plot area into 2 by 2
+par(mfrow=c(2,2))
+
+#transpose matrix
+t(x)
+
+#clear variables in workspace
+rm(list=ls())
+
+#get working directory
+getwd()
+
+#set working directory
+setwd()
+
+#read table data (assume table is called Auto.data, treat question marks as missing data)
+Auto=read.table("Auto.data",header=T, na.strings="?")
+
+#get column names from table
+names(Auto)
+
+#show type
+class(var)
+
+#apply function over data.frame or list or vector - here range is used, could have used mean or sd (standard deviation for example)
+sapply(Auto[,1:7],range)
+
+#remove rows 10 to 85 for example
+newAuto = Auto[-(10:85),]
+
+#load library (in this example loading the MASS library
+library(MASS)
+
+#get subset - this example gets the subset of chas column that are equal to 1.
+subset(Boston,chas == 1)
+
+#median 
+median
+
+#uniform random numbers 
+runif(100,-1,1)
+
+#linear model fit
+lm(y~x)
+lm(y~x+I(x^2)) #this is quadratic term also
+
+#plotting on same plot - type is point plot, second plot uses cross hairs
+plot(x,y,type='p',col='red')
+lines(x,yf1,type='p',pch=4,col='black')
+
+#list files in directory
+list.files(".") #this is for current directory
+
+#use a large mark on plot cex
+lines(mx,my,type='p',pch=4,cex=4,col='black')
+
+#plot linear regression line fit
+plot(c(0,50),c(0,200))
+abline(lm.fit)
+
+#plot linear regression line fit against residuals and more
+plot(lm.fit)
+
+#plot scatter plot
+pairs(Auto)
+
+#normal distribution
+rnorm
+
+#add line to plot
+abline(lm.fit,lwd=3,col=2) #using a linear regression fit
+abline(-1,0.5,lwd=3,col=3) # using a intercept and slope
+
+#confidence interval 
+confint(lm.fit)
+
+#length of data
+length
+
+#linear regression fit all
+lm(y~.,data=Boston)
+
+#linear regresssion fit all except age
+lm(medv~.-age,data=Boston)
+
+#make numeric to classification
+Boston$chas = factor(Boston$chas,labels = c("N","Y"))
