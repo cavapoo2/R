@@ -87,7 +87,7 @@ list.files(".") #this is for current directory
 lines(mx,my,type='p',pch=4,cex=4,col='black')
 
 #plot linear regression line fit
-plot(c(0,50),c(0,200))
+plot(c(0,50),c(0,200)).
 abline(lm.fit)
 
 #plot linear regression line fit against residuals and more
@@ -117,3 +117,34 @@ lm(medv~.-age,data=Boston)
 
 #make numeric to classification
 Boston$chas = factor(Boston$chas,labels = c("N","Y"))
+
+#correlation
+cor(Boston[-c(1,4)]) # correlation ignoring columns 1 and 4
+
+#polynomial regression
+lm(crim ~ poly(zn, 3)) #this creates B0 + B1*X + B2*X^2 + B3 *X^3
+
+#logistic regression
+glm.fit = glm(dir_dat~Weekly$Lag1+Weekly$Lag2+Weekly$Lag3+Weekly$Lag4+Weekly$Lag5+Weekly$Volume,family=binomial)
+
+#replicate elements of a list
+rep("Down",1250)
+
+#compare objects
+all.equal(a,b)
+identical(a,b)
+
+#create cross table (confusion matrix for example)
+table(glm.pred,Direction)
+
+#convert list to character array (flatten a list)
+unlist
+
+#convert from data.frame to numeric or character
+Weekly["Lag2"][,] # this is same as Weekly$Lag2
+
+#get variable args from function
+some_func(...)
+{
+    dots = list(...)
+}
