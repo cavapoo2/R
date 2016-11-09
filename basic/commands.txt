@@ -148,3 +148,120 @@ some_func(...)
 {
     dots = list(...)
 }
+
+#confusion matrix logisitic regression
+train = (Weekly$Year < 2009)
+Weekly.0910 = Weekly[!train, ]
+glm.fit = glm(Direction ~ Lag2, data = Weekly, family = binomial, subset = train)
+glm.probs = predict.glm(glm.fit,newdata= Weekly.0910, type = "response")
+glm.pred = rep("Down", length(glm.probs))
+glm.pred[glm.probs > 0.5] = "Up"
+Direction.0910 = Weekly$Direction[!train]
+conf_mat = table(glm.pred, Direction.0910)
+correct = ((conf_mat[1,1] + conf_mat[2,2])/sum(conf_mat)) * 100
+error_rate = 100 - correct
+
+#confusion matrix lda
+lda.fit = lda(Direction ~ Lag2, data = Weekly, family = binomial, subset = train)
+lda.pred = predict(lda.fit,Weekly.0910)
+lda.class = lda.pred$class
+conf_mat_lda = table(lda.class,Direction.0910)
+correct_lda = (conf_mat_lda[1,1] + conf_mat_lda[2,2])/sum(conf_mat_lda) * 100
+error_rate_lda = 100 - correct_lda
+
+#confusion matrix with knn
+lag2_train = as.matrix(Weekly$Lag2[train])
+lag2_test = as.matrix(Weekly$Lag2[!train])
+dir_train = Weekly$Direction[train]
+dir_test = Weekly$Direction[!train]
+knn.pred = knn(lag2_train,lag2_test,dir_train,k=1)
+conf_mat_knn = table(knn.pred,dir_test)
+
+
+#create matrix
+as.matrix()
+
+#error rate
+mean(pred == direction)*100
+
+#boxplot
+boxplot(displacement~mpg,data=Auto,main="displacement vs mpg")
+
+#for loop
+for (i in 1:10000)
+    store[i]=i^2
+
+#sample data
+sample(1:100,rep=TRUE) # take samples from the 1:100 data with replacement
+
+#install a package
+install.packages("scatterplot3d")
+
+#dummy variable
+if say some data is "No", "Yes", this can be used in logistic
+regression a normal, like    
+
+glm.fit = glm(default~income+balance+student,data = Default,family = binomial)
+here the student is dummy variable.
+
+#standard deviation
+sd
+
+#confidence interval
+t.test(Boston$medv)
+
+#sequence or range of numbers
+seq(1,10,by=0.2)
+
+#random seed
+set.seed(x)
+
+#available colors
+colors()
+
+#lasso
+library(glmnet)
+grid = 10^seq(10,-2,length = n)
+lasso.mod = glmnet(xdat[train,],y[train],alpha=1,lambda=grid)
+cv.out = cv.glmnet(xdat[train,],y[train],alpha=1)
+bestlam = cv.out$lambda.min
+lasso.pred = predict(lasso.mod,s=bestlam,newx = xdat[test,])
+mean.lasso = mean((lasso.pred-y.test)^2)
+
+out.lasso = glmnet(xdat,y,alpha=1,lambda=grid)
+lasso.coef = predict(out.lasso,type="coefficients",s=bestlam)[1:11,]
+
+
+#matrix of data like data frame
+xdat = model.matrix(y~.,fr)[,-1] # 
+
+#best subset
+library(leaps)
+y.fit = regsubsets(y~poly(x,10,raw=T),data=fr,nvmax=10)
+res = summary(y.fit)
+c = coef(y.fit,10)
+a1 = which.min(res$cp)
+a2 = which.min(res$bic)
+a3 = which.max(res$adjr2)
+
+#forward step selection
+y.fit.fwd = regsubsets(y~poly(x,10,raw=T),data=fr,nvmax=10,method="forward")
+res.fwd = summary(y.fit.fwd)
+c.fwd = coef(y.fit.fwd,10)
+a1.fwd = which.min(res.fwd$cp)
+a2.fwd = which.min(res.fwd$bic)
+a3.fwd = which.max(res.fwd$adjr2)
+
+
+#backward step selection
+y.fit.bck = regsubsets(y~poly(x,10,raw=T),data=fr,nvmax=10,method="backward")
+res.bck = summary(y.fit.bck)
+c.bck = coef(y.fit.bck,10)
+a1.bck = which.min(res.bck$cp)
+a2.bck = which.min(res.bck$bic)
+a3.bck = which.max(res.bck$adjr2)
+
+
+
+
+
