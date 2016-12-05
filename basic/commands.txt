@@ -1,4 +1,4 @@
-#this is just a list of common commands for R
+    #this is just a list of common commands for R
 
 #number of rows
 row(var) - tells the number of rows
@@ -6,8 +6,16 @@ row(var) - tells the number of rows
 #all columns except the first
 college = college[,-1]
 
+all columns except specific names
+dd = !(names(Auto) %in% c("mpg","mpg_level","name"))
+newdata = Auto[,dd]
+
+names(Auto)[!(names(Auto) %in% c("mpg","mpg_level","name"))]   # another way
+
 #read csv
 acsv <- read.csv("some.csv")
+#read csv strip any unwanted values - good to do at csv read stage then data won't get converted to factors unintentionally
+Auto = read.csv("Auto.csv",na.strings=c("?"))
 
 #show csv
 fix(acsv)
@@ -126,7 +134,7 @@ cor(Boston[-c(1,4)]) # correlation ignoring columns 1 and 4
 lm(crim ~ poly(zn, 3)) #this creates B0 + B1*X + B2*X^2 + B3 *X^3
 
 #logistic regression
-glm.fit = glm(dir_dat~Weekly$Lag1+Weekly$Lag2+Weekly$Lag3+Weekly$Lag4+Weekly$Lag5+Weekly$Volume,family=binomial)
+glm.fit = glm(dir_dat~Weekly$Lag1+Weekly$Lag2+Weekly$Lag3+Weekly$Lag4+Weekly$Lag5+Weekly$Volume,data=,family=binomial)
 
 #replicate elements of a list
 rep("Down",1250)
@@ -171,6 +179,7 @@ correct_lda = (conf_mat_lda[1,1] + conf_mat_lda[2,2])/sum(conf_mat_lda) * 100
 error_rate_lda = 100 - correct_lda
 
 #confusion matrix with knn
+library(class)
 lag2_train = as.matrix(Weekly$Lag2[train])
 lag2_test = as.matrix(Weekly$Lag2[!train])
 dir_train = Weekly$Direction[train]
@@ -445,3 +454,330 @@ lm.step = glm(wage~cut(age,min_step),data=Wage)
 lm.step.pred = predict(lm.step,data.frame(age=age.grid))
 plot(wage~age,data=Wage,col="darkgrey")
 lines(age.grid,lm.step.pred,col="red",lwd=2)
+
+
+#using gam with predict
+gam6 = gam(wage~year+s(age,5) +  education,data=Wage)
+par(mfrow=c(1,3))
+plot(gam6,se=TRUE,col = "blue")
+#test F
+ares = anova(gam1,gam2,gam3,gam4,gam5,gam6)
+#try predict
+#using preds on the test data
+preds = predict(gam6,newdata=Wage)
+npreds = as.numeric(preds)
+yt = Wage$wage
+mse = mean((npreds - yt)^2)
+plot(1:length(yt),yt,type='p',col="blue")
+lines(1:length(yt),npreds,type='p',col="red")
+
+#residuals sum of squares
+all.rss = rep(NA,10)
+for(i in 1:10)
+{
+    lm.fit = lm(nox~poly(dis,i), data= Boston)
+    all.rss[i] = sum((lm.fit$residuals)^2)
+}
+plot(all.rss)
+
+#get R squared from a gam fit
+#fit a gam
+library(gam)
+gam.fit = gam(Outstate~ Private + s(Room.Board,df=2)+s(PhD,df=2)+s(perc.alumni,df=2)+s(Expend,df=2)+s(Grad.Rate,df=2),data=data_train)
+par(mfrow=c(2,3))
+plot(gam.fit,se=T,col="blue")
+
+#get test R squared
+gam.pred = predict(gam.fit,data_test)
+gam.err = mean((data_test$Outstate - gam.pred)^2)
+
+gam.tss = mean((data_test$Outstate - mean(data_test$Outstate))^2)
+test.rss = 1 - gam.err/gam.tss
+
+#max of vectors
+pmax(c(1,2,3),c(1,0,5))
+
+#3d plot with different views
+par(mar=c(1,1,1,1))
+layout(matrix(1:4, nrow=2))
+s=lapply(c(0,30,60,90), function(t) persp(x,y,z, col='blue', theta=t))
+
+#tree method to predict
+set.seed(5)
+library(ISLR)
+library(MASS)
+library(tree)
+train = sample(1:nrow(Carseats),nrow(Carseats)/2)
+test = -train
+tree.carseats = tree(Sales~.-Sales,Carseats[train,])
+pred = predict(tree.carseats,newdata=Carseats[test,])
+plot(pred,Carseats[test,"Sales"])
+abline(0,1)
+mse = mean((pred-Carseats[test,"Sales"])^2)
+#use cross validation
+cv.car = cv.tree(tree.carseats)
+plot(cv.car$size,cv.car$dev,type='b')
+#from graph seems like 10 is best
+prune.car = prune.tree(tree.carseats,best=10)
+#now get improved mse
+pred_pruned = predict(prune.car,newdata=Carseats[test,])
+plot(pred_pruned,Carseats[test,"Sales"])
+abline(0,1)
+mse_pruned = mean((pred_pruned - Carseats[test,"Sales"])^2)
+
+#now use bagging approach n = p
+library(randomForest)
+bag.carseats = randomForest(Sales~.-Sales,data=Carseats,subset=train,mtry=ncol(Carseats)-1,importance=TRUE)
+pred.bag = predict(bag.carseats,newdata=Carseats[test,])
+plot(pred.bag,Carseats[test,"Sales"])
+abline(0,1)
+mse_bag = mean((pred.bag - Carseats[test,"Sales"])^2)
+imp = importance(bag.carseats)
+
+#now try a random forest
+ps = (ncol(Carseats)-1)/3
+
+rf.carseats = randomForest(Sales~.,data=Carseats,subset=train,mtry=ps,importance=TRUE)
+rf.pred = predict(rf.carseats,newdata=Carseats[test,])
+mse_rf = mean((rf.pred - Carseats[test,"Sales"])^2) 
+
+#tree and pruned tree with class type
+ #fit tree to OJ with Purchase as the response
+tree.OJ = tree(Purchase~.,OJ_train)
+plot(tree.OJ)
+text(tree.OJ,pretty=0)
+
+pred.OJ = predict(tree.OJ,OJ_test,type="class")
+tab.OJ = table(pred.OJ,OJ_test$Purchase)
+
+err.OJ =  (tab.OJ[1,2] + tab.OJ[2,1])  / sum(tab.OJ)
+cv.OJ = cv.tree(tree.OJ)
+plot(cv.OJ$size,cv.OJ$dev,type='b') # 5 is min
+#now produce pruned tree
+prune.OJ = prune.tree(tree.OJ,best=5)
+
+#compare test error rates
+pred.OJ.pruned = predict(prune.OJ,OJ_test, type="class")
+tab.OJ.pruned = table(pred.OJ.pruned,OJ_test$Purchase)
+err.OJ.pruned = (tab.OJ.pruned[1,2] + tab.OJ.pruned[2,1]) / sum(tab.OJ.pruned)
+
+#remove column by name in data frame
+Hitters[,! names(Hitters) %in% "Salary"]
+
+#remove NA from rows
+na.rows = apply(Hitters,1,function(x){any(is.na(x))})
+Hitters_new = Hitters[!na.rows,]
+Hitters_na = Hitters[na.rows,]
+
+#another way, remove ? from rows
+x = rowSums(Auto == "?",na.rm = TRUE) > 0L
+
+#factor level contains unwanted value, remove unwanted level
+#note use this after running rowSums (if more levels than levels in the data, it drops extra levels)
+x = droplevels(x)
+
+#lasso with glmnet
+#now use glmnet - generalised linear model with lasso
+library(glmnet)
+x = model.matrix(log_sal~.,data = Hitter_log[train,])
+y = Hitter_log[train,"log_sal"]
+x_test = model.matrix(log_sal~., data=Hitter_log[test,])
+lasso.fit = glmnet(x,y,alpha=1)
+lasso.pred = predict(lasso.fit, s = 0.01,newx = x_test)
+error_lasso = mean((lasso.pred - Hitter_log[test,"log_sal"])^2)
+
+#perform boosting
+library(gbm)
+lam = seq(0,0.1,0.01)
+i=1;
+err_test = rep(NA,length(lam))
+err_train = rep(NA,length(lam))
+for (sh in lam)
+{
+    boost.boston = gbm(log_sal~.,data=Hitter_log[train,],distribution="gaussian",n.trees=1000,interaction.depth=4,shrinkage=sh,verbose=F)
+pred.train = predict(boost.boston,newdata=Hitter_log[train,],n.trees=1000)
+pred.test = predict(boost.boston,newdata=Hitter_log[test,],n.trees=1000)
+    err_test[i] = mean((pred.test - Hitter_log[test,"log_sal"])^2)
+    err_train[i] = mean((pred.train - Hitter_log[train,"log_sal"])^2)
+    i = i+1
+    print(i)
+}
+
+#convert qualative value to 1 or 0
+ifelse(Caravan$Purchase == "Yes",1,0)
+
+#use all except
+library(gbm)
+boost.cara = gbm(Purchase~.-(PVRAAUT+AVRAAUT),data=Cara_train,distribution="bernoulli",n.trees=1000,shrinkage=0.01)
+
+#correlate specific var
+cor(Caravan,Caravan$Purchase)
+
+#place text in plot
+text(c(0),c(20), "hello",col="red")
+
+#plot circle
+radius = 2
+plot(NA, NA, type = "n", xlim = c(-4, 2), ylim = c(-1, 5), asp = 1, xlab = "X1", 
+    ylab = "X2")
+symbols(c(-1), c(2), circles = c(radius), add = TRUE, inches = FALSE)
+text(c(-1), c(2), "< 4")
+text(c(-4), c(2), "> 4")
+
+#another circle
+#investigate a non linear boundary - this is circle
+#(x - h)^2  + (y - k)^2  = r^2
+r = 2;
+c1 = -1
+c2 = 2
+p = 100
+pis = seq(0,2*pi,pi/p)
+
+x = r* cos(pis) +c1
+y = r * sin(pis) + c2
+
+plot(x,y,xlim=c(-5,2),ylim=c(-1,5))
+
+#2 set of vectors choose ones not in the other set
+setdiff(1:10,c=(2,4,6)) # picks 1,3,5,7,8,9,10
+
+#svm linear polynomial and radial
+#create quadratic
+x = rnorm(100)
+y = 2*x^2 + 3 + rnorm(100)
+type1 = sample(100,50)
+type2 = -type1
+y[type1] = y[type1] + 3
+y[type2] = y[type2] - 3
+plot(x[type1],y[type1], col='red', ylim=c(-2,19) )
+points(x[type2],y[type2],col='blue')
+
+z = rep(0,100)
+z[type1] = 1 # this class is 1
+#take 25 from each type to make train and test data
+train = c(sample(type1,25), sample(setdiff(1:100,type1),25))
+data.train = data.frame(x=x[train],y=y[train],z=as.factor(z[train]))
+data.test = data.frame(x=x[-train],y=y[-train],z=as.factor(z[-train]))
+
+library(e1071)
+#use a linear support vector classifier
+svm.linear = svm(z~.,data=data.train, kernel="linear",cost=10,scale=FALSE)
+plot(svm.linear,data.train)
+
+#support vectors are plotted as crosses
+#svm.linear$index
+
+pred_train = predict(svm.linear,data.train)
+tb = table(z[train],pred_train)
+
+#now try a polynomial kernel
+    
+svm.poly = svm(z~.,data=data.train, kernel="polynomial",cost=10,scale=FALSE)
+
+plot(svm.poly,data.train)
+
+pred_poly_train = predict(svm.poly,data.train)
+tb_poly = table(z[train], pred_poly_train)# no training errors this time
+
+#now try a radial 
+svm.rad = svm(z~.,data=data.train, kernel="radial",gamma=1,cost=10,scale=FALSE)
+
+plot(svm.rad,data.train)
+
+pred_rad_train = predict(svm.rad,data.train)
+tb_rad = table(z[train], pred_rad_train)# no training errors this time
+
+#now look at the test errors
+plot(svm.linear,data.test)
+test_lin = table(z[-train],predict(svm.linear,data.test))
+
+test_poly = table(z[-train],predict(svm.poly,data.test))
+
+test_rad = table(z[-train],predict(svm.rad,data.test))
+
+set.seed(421)
+n=500
+p=2
+x1 = runif(500) - 0.5 # mean 0
+x2 = runif(500) - 0.5 # mean 0
+y = 1*(((x1^2) - (x2^2)) > 0)
+
+#plot the results
+plot(x1[y==0],x2[y==0],col='blue',main="initial")
+points(x1[y==1],x2[y==1],col='red')
+
+#fit a logisitc regression
+dat = data.frame(y,x1,x2)
+glm.fit = glm(y~x1+x2,data=dat,family=binomial)
+lm.prob = predict(glm.fit,dat,type="response") # here we use training data to predict
+lm.pred = ifelse(lm.prob > 0.53,1,0)  #note we just took mean of lm.prob to get 0.53
+data.pos = dat[lm.pred==1,]
+data.neg = dat[lm.pred==0,]
+
+plot(data.pos$x1,data.pos$x2,col='blue',main="linear")
+points(data.neg$x1,data.neg$x2,col='red')
+
+#if we stuck with 0.5 then all would have been classed same value
+
+#now fit logistic regression using non linear functions
+
+glm.fit.nl = glm(y~poly(x1,2)+I(x2),data=dat,family=binomial)
+lm.prob.nl = predict(glm.fit.nl,dat,type="response")
+lm.pred.nl = ifelse(lm.prob.nl > 0.5,1,0)
+data.pos.nl = dat[lm.pred.nl==1,]
+data.neg.nl = dat[lm.pred.nl==0,]
+
+plot(data.pos.nl$x1,data.pos.nl$x2,col='blue',main="non linear")
+points(data.neg.nl$x1,data.neg.nl$x2,col='red')
+
+#fit a support vector svm
+library(e1071)
+svm.radial = svm(as.factor(y)~x1+x2,data=dat,kernel="radial",gamma=1,cost=10,scale=FALSE)
+plot(svm.linear,dat,main="svm radial")
+svm.pred = predict(svm.radial,dat)
+data.pos.svm = dat[svm.pred ==1,]
+data.neg.svm = dat[svm.pred ==0,]
+plot(data.pos.svm$x1,data.pos.svm$x2,col='blue',main="new svm radial")
+points(data.neg.svm$x1,data.neg.svm$x2,col='red')
+
+#another svm with tuning tune
+#generate  2 classes p=2 so classes are
+#just barely separable
+set.seed(4)
+n=1000
+x = matrix(rnorm(n*2), ncol=2)
+y = c(rep(-1,n/2),rep(1,n/2))
+x[y==1,] = x[y==1,] +  3  
+dat = data.frame(y,x)
+plot(x[y==-1],col='blue',ylim=c(-5,10))
+points(x[y==1],col='red')
+library(e1071)
+tune.out = tune(svm,as.factor(y)~.,data=dat,kernel="linear",ranges=list(cost=c(0.001,0.01,0.1,1,5,10,100)))
+sm = summary(tune.out) # seems like 0.1 is best
+smbest = tune.out$best.model
+
+res = data.frame(cost = tune.out$performances$cost, misclass = tune.out$performances$error * 100)   
+#try training test
+
+#svm.fit1 = svm(as.factor(y)~.,data=dat,kernel="linear",cost=0.01,scale=FALSE)
+#plot(svm.fit1,dat)
+costs=c(0.001,0.01,0.1,1,5,10,100)
+#create some test data
+xt = matrix(rnorm(n*2),ncol=2)
+yt = c(rep(-1,n/2),rep(1,n/2))
+xt[y==1,] = x[y==1,] + 3
+dat_test = data.frame(yt,xt)
+errs = rep(NA,length(costs))
+errs_test = rep(NA,length(costs))
+i=1
+for(c in costs)
+{
+    svm.fit = svm(as.factor(y)~.,data=dat,kernel="linear",cost=c,scale=FALSE)
+    pred = predict(svm.fit,dat)
+    pred_test = predict(svm.fit,dat_test)
+   # print(pred)
+    #tabr = table(y,pred)
+    errs[i] = sum(pred != dat$y)
+    errs_test[i] = sum(pred_test != dat_test$yt)
+    i= i + 1
+}
