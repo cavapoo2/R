@@ -1,4 +1,4 @@
-    #this is just a list of common commands for R
+#this is just a list of common commands for R
 
 #number of rows
 row(var) - tells the number of rows
@@ -781,3 +781,147 @@ for(c in costs)
     errs_test[i] = sum(pred_test != dat_test$yt)
     i= i + 1
 }
+#plot pairs plot with formula, plot svm 
+plotpairs = function(fit,type) {
+    for(name in names(Auto)[!(names(Auto) %in% c("mpg","mpg_level","name"))]){
+        plot(fit,Auto,as.formula(paste("mpg~",name,sep="")),main=type)
+    }
+}
+
+#another plot svm
+plot(svm.fit,data,x1~x2) # here just plot the pairs x1 and x2
+
+#simple example of grouping cluster of values
+set.seed(5)
+X = cbind(c(1,1,0,5,6,4),c(4,3,4,1,2,0))
+
+labels = sample(2,nrow(X),replace=T)
+
+c1 = c(mean(X[labels==1,1]),mean(X[labels==1,2]))
+c2 = c(mean(X[labels==2,1]),mean(X[labels==2,2]))
+
+
+euclid = function(a,b) {
+    return (sqrt(c(a[1]-b[1])^2 + (a[2]-b[2])^2)) 
+}
+labs = function(x,c_1,c_2)
+{
+    c1 = c_1
+    c2= c_2
+    print(c1)
+    print(c2)
+    labs = rep(NA,nrow(x)) 
+    for (j in 1:10)
+    {
+            for(i in 1:nrow(x))
+            {
+                if( euclid(x[i,],c1) < euclid(x[i,],c2))
+                {
+                    labs[i] = 1
+                }
+                else
+                {
+                    labs[i] = 2
+                }
+            }
+
+        #update centroids
+        c1 = c(mean(X[labs==1,1]),mean(X[labs==1,2]))
+        c2 = c(mean(X[labs==2,1]),mean(X[labs==2,2]))
+        print(labs)
+        print(c1)
+        print(c2)    
+    }
+
+    
+    return (labs)
+}
+
+labels_n = labs(X,c1,c2)
+
+plot(X[,1],X[,2], col=(labels_n+1),pch=4,cex=2)
+points(c1[1],c1[2],col="blue",pch=3)
+points(c2[1],c2[2],col="black",pch=3)
+
+#print multiple variables to the console
+cat(sprintf("i=%d,j=%d\n",i,j))
+
+#multiply each row of matrix by vec (which is same length as each row vec)
+t1 = t(m)* vec
+#sum each row of matrix
+t1 = apply(t(t1),1,sum)
+
+#perform routines / functions on matrix
+A = sweep(dat,MARGIN=2,10,"*") # multiply by 10 across rows 
+
+
+#centre and scale variables
+scale
+or
+dmean = apply(USArrests,2,mean)
+dsdev = sqrt(apply(USArrests,2,var))
+dsc = sweep(USArrests,MARGIN=2,dmean,"-")
+dsc = sweep(dsc,MARGIN=2,dsdev,"/")
+
+#principal component
+
+pr.out = prcomp(USArrests, scale=TRUE)
+pve = pr.out$sdev^2 / sum(pr.out$sdev^2)
+loads = pr.out$rotation # these are the factors 
+
+#hierarchial clustering
+hr.complete = hclust(dist(USArrests),method="complete")
+plot(hr.complete)
+c = cutree(hr.complete,3) # cut into 3 clusters
+t1 = table(c)
+
+hr.complete_sc = hclust(dist(scale(USArrests)),method="complete")
+c1 = cutree(hr.complete_sc,3)
+t2 = table(c1)
+
+
+#kmeans clustering and principal component
+set.seed(6)
+
+dat = matrix(rnorm(20*3*50,mean=0,sd=0.001),ncol=50)
+
+dat[1:20,2] =10 
+dat[21:40,1]=2
+dat[21:40,2]=2
+dat[41:60,1] =10 
+
+labs = c(rep(1,20),rep(2,20),rep(3,20)) 
+
+Cols = function(vec)
+{
+    cols = rainbow(length(vec))
+    return (cols[as.numeric(as.factor(vec))])
+}
+
+pr.out = prcomp(dat)
+plot(pr.out$x[,1:2],col=1:3,pch=19)
+
+#kmeans cluster
+km.out = kmeans(dat,3,nstart=20)
+tb = table(km.out$cluster,labs)
+
+#try k =2
+km.out2 = kmeans(dat,2,nstart=20)
+tb2 = table(km.out2$cluster,labs)
+
+#try k =4
+km.out4 = kmeans(dat,4,nstart=20)
+tb4 = table(km.out4$cluster,labs)
+
+#use the pr out data
+
+km.pr = kmeans(pr.out$x[,1:2],3,nstart=20)
+
+tbpr = table(km.pr$cluster,labs)
+
+#note the labels are defined randomly here. The kmeans
+decides which label, so maybe have to adapt to that
+e.g instead of 1,2,3 might need to do 3,2,1 or 1,3,2.
+hence we should create label after keans result. 
+we know our principal component has identified 3 
+regions here.

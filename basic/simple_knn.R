@@ -15,3 +15,4 @@ simple_knn <- function(train,test,k,cl)
 #test <- matrix(c(0,0,0),1,3)
 #c1 <- factor(c("Red","Red","Red","Grren","Green","Red"))
 #k <- 1   # use 3 also
+
